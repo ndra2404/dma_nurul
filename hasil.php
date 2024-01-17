@@ -41,7 +41,7 @@ if(!isset($_SESSION['username'])){
     <link href="css/theme.css" rel="stylesheet" media="all">
 
     <!-- Chart JS -->
-    <script type="text/javascript" src="chartjs/dist/Chart.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
 
 </head>
 
@@ -83,8 +83,12 @@ if(!isset($_SESSION['username'])){
                         }
                         ?>
                         <li class="active">
-                            <a href="#" >
+                            <a href="hasil.php" >
                                 <i class="fas fa-table"></i>Hasil Peramalan</a>
+                        </li>
+                        <li>
+                            <a href="login.php" >
+                                <i class="fas fa-table"></i>Logout</a>
                         </li>
                     </ul>
                 </div>
@@ -106,13 +110,23 @@ if(!isset($_SESSION['username'])){
                             <a class="js-arrow" href="index.php">
                                 <i class="fas fa-tachometer-alt"></i>Beranda</a>
                         </li>
+                        <?php
+                        if($_SESSION['username']=='admin'){
+                        ?>
                         <li>
                             <a href="upload.php">
                                 <i class="fas fa-chart-bar"></i>Data Peramalan</a>
                         </li>
+                        <?php
+                        }
+                        ?>
                         <li class="active">
                             <a href="#" >
                                 <i class="fas fa-table"></i>Hasil Peramalan</a>
+                        </li>
+                        <li>
+                            <a href="login.php" >
+                                <i class="fas fa-table"></i>Logout</a>
                         </li>
                     </ul>
                 </nav>
@@ -140,7 +154,7 @@ if(!isset($_SESSION['username'])){
                         <div class="col-md-12">
                             <div class="container-fluid">
                                 <div class="table-data__tool">
-                                    <div class="table-data__tool-left">
+                                    <div class="table-data__tool-left" style="display:none">
                                         <form action="hasil.php" method="get">
                                             <div class="rs-select2--light rs-select2">
                                                 <p>Konstanta :</p>
@@ -187,13 +201,13 @@ if(!isset($_SESSION['username'])){
                                                 <th>b</th>
                                                 <th>Prediksi</th>
                                                 <th>Error</th>
-                                                <th style="display:none;">ABS(error/qty)</th>
+                                                <th>ABS(error/qty)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php
                                             $no = 1;
-                                            $konstanta = $_GET['konstanta']-1;
+                                            $konstanta = $_GET['konstanta']??1-1;
                                             $tampil = mysqli_query($koneksi,"SELECT 
                                             a.periode, 
                                             a.item, 
@@ -244,7 +258,7 @@ if(!isset($_SESSION['username'])){
                                                         }?>],
                                                 datasets: [
                                                 {
-                                                    label: "Harga",
+                                                    label: "Penjualan Bread & Cake",
                                                     fill: false,
                                                     lineTension: 0.1,
                                                     backgroundColor: "rgba(30, 144, 255, 1)",
@@ -291,7 +305,7 @@ if(!isset($_SESSION['username'])){
                                     </script>
                                 <br/>
                                 <h4>Nilai MAPE (Mean Absolute Percentage Error)= <?php echo number_format(100/$n*$sum1,2,",",".")?>%</h4>
-                                <h2>Prediksi <?php echo $prediksi = $_GET['prediksi'] ?> periode kedepan</h2>
+                                <h2>Prediksi <?php echo $prediksi = $_GET['prediksi']??1 ?> periode kedepan</h2>
                                 <br/>
                                 <div class="table-responsive table-data">
                                     <table class="table table-borderless table-striped table-earning">

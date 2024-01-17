@@ -112,8 +112,12 @@ if(!isset($_SESSION['username'])){
                         }
                         ?>
                         <li>
-                            <a href="#" >
+                            <a href="hasil.php" >
                                 <i class="fas fa-table"></i>Hasil Peramalan</a>
+                        </li>
+                        <li>
+                            <a href="login.php" >
+                                <i class="fas fa-table"></i>Logout</a>
                         </li>
                     </ul>
                 </nav>

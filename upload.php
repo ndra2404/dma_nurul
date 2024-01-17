@@ -79,9 +79,13 @@ if(!isset($_SESSION['username'])){
                         <?php
                         }
                         ?>
-                        <li>
-                            <a href="#" >
+                        <li class="active">
+                            <a href="hasil.php" >
                                 <i class="fas fa-table"></i>Hasil Peramalan</a>
+                        </li>
+                        <li>
+                            <a href="login.php" >
+                                <i class="fas fa-table"></i>Logout</a>
                         </li>
                     </ul>
                 </div>
@@ -103,13 +107,23 @@ if(!isset($_SESSION['username'])){
                             <a class="js-arrow" href="index.php">
                                 <i class="fas fa-tachometer-alt"></i>Beranda</a>
                         </li>
-                        <li class="active">
-                            <a href="#">
+                        <?php
+                        if($_SESSION['username']=='admin'){
+                        ?>
+                        <li>
+                            <a href="upload.php">
                                 <i class="fas fa-chart-bar"></i>Data Peramalan</a>
                         </li>
-                        <li>
-                            <a href="#" >
+                        <?php
+                        }
+                        ?>
+                        <li class="active">
+                            <a href="hasil.php" >
                                 <i class="fas fa-table"></i>Hasil Peramalan</a>
+                        </li>
+                        <li>
+                            <a href="login.php" >
+                                <i class="fas fa-table"></i>Logout</a>
                         </li>
                     </ul>
                 </nav>
