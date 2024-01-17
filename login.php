@@ -13,7 +13,7 @@ if($_POST){
 		echo "<script>location.href='index.php'</script>";
 	}
 	else{
-		echo "<script>alert('Gagal Total')</script>";
+		echo "<script>alert('Gagal Login')</script>";
 	}
 }
 ?>
