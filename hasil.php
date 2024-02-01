@@ -3,7 +3,111 @@ include "koneksi.php";
 session_start();
 if(!isset($_SESSION['username'])){
 	echo "<script>location.href='login.php'</script>";
+
 }
+function countStart($data,$ma) {
+    $space = count($data);
+    $MA = MovingAverage($data, $space, $ma);
+    $DMA = DoubleAverage($MA, $space, $ma);
+    $AT = AKoefisien($MA, $DMA, $ma);
+    $BT = BKoefisien($MA, $DMA, $ma);
+    $FT = Ft($AT, $BT, $ma);
+    $MAPE = MAPE($data, $FT, $ma);
+
+    array_push($data, array('Hasil peramalan', NULL,NULL));
+    return array(
+        'data'=>$data,
+        'MA'=>$MA,
+        'DMA' => $DMA,
+        'AT' => $AT,
+        'BT' => $BT,
+        'FT' => $FT,
+        'MAPE'=>$MAPE
+    );
+}
+function MovingAverage($data,$index,$ma) {
+    $MA = array_fill(0, $index + 1, NULL);
+    for ($i = $ma - 1; $i < $index; $i++) { 
+        $MA[$i] = array_sum(array_column(array_slice($data, $i - $ma + 1, $ma), 1)) / $ma;
+    }
+
+    return $MA;
+}
+
+function DoubleAverage($data,$index,$ma) {
+    // $MA = array_fill(0, $index + 1, NULL);
+    // for ($i = $ma - 1; $i < $index; $i++) { 
+    //     $MA[$i] = round(array_sum(array_slice($data, $i - $ma + 1, $ma)) / ($ma-2));
+    // }
+    $MA = array_fill(0, $index + 1, NULL);
+    for ($i = ($ma*2)-2; $i < $index; $i++) { 
+        $MA[$i] = array_sum(array_slice($data, $i - $ma + 1, $ma)) / $ma;
+    }
+
+    
+    return $MA;
+}
+
+function AKoefisien($data, $data2, $ma) {
+    // $index = count($dma);
+    // $AT = array_fill(0, $index, NULL);
+    // for ($i = $ma + 1; $i < $index; $i++) { 
+    //     $AT[$i] = array_sum(array_slice($sma, $i - $ma + 1, $ma)) / $ma;
+    // }
+    $index = count($data2)-1;
+    $AT = array_fill(0, $index + 1, NULL);
+    for ($i = ($ma*2)-2; $i < $index; $i++) { 
+        $AT[$i] = (2 * $data[$i]) - $data2[$i];
+    }
+
+    
+    return $AT;
+            
+}
+
+function BKoefisien($data, $data2, $ma) {
+    $index = count($data2)-1;
+    $BT = array_fill(0, $index + 1, NULL);
+    for ($i = ($ma*2)-2; $i < $index; $i++) { 
+        $BT[$i] = (2/($ma-1)) * ($data[$i]) - $data2[$i];
+    }
+    return $BT;
+}
+
+function Ft($data, $data2, $ma) {
+    $index = count($data2);
+    $FT = array_fill(0, $index + 1, NULL);
+    for ($i = ($ma*2)-1; $i < $index; $i++) { 
+        $FT[$i] = $data[$i-1] + $data2[$i-1];
+    }
+    return $FT;
+}
+function MAPE($data, $data2, $ma) {
+    $index = count($data2);
+    $MAPE = array_fill(0, $index + 1, NULL);
+    for ($i = ($ma*2)-1; $i < $index; $i++) {
+        $MAPE[$i] = (abs($data[$i][1]-$data2[$i])/$data[$i][1])*100;
+        //(abs($data[$i-1] - $data2[$i-1])/$data[$i-1])*100
+    }
+    return $MAPE;
+}
+
+$tampil = mysqli_query($koneksi,"SELECT 
+    a.periode, 
+    a.item, 
+    a.value
+    FROM tbl_penjualan AS a ORDER BY a.periode");
+    $total = mysqli_num_rows($tampil);
+    $output = [];
+    while($data=mysqli_fetch_array($tampil)){
+        $output[] = [
+            $data['periode'],
+            $data['value'],
+            $data['item']
+        ];
+    }
+    $periode = 3;
+    $hasil = countStart($output,$periode);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -161,13 +265,7 @@ if(!isset($_SESSION['username'])){
                                                 <div class="dropDownSelect2"></div>
                                             </div>
                                             <div class="rs-select2--light rs-select2--sm">
-                                                <?php
-                                                if(isset($_GET['konstanta'])){
-                                                    $konstanta = $_GET['konstanta'] ?>
-                                                    <input type="number" style="display:none" name="konstanta" id="konstanta" class="form-control" value="10" required disabled/>
-                                                    <?php }else{ ?>
-                                                    <input type="number"  style="display:none" name="konstanta" id="konstanta" class="form-control"  value="10" required disabled/>
-                                                    <?php } ?>
+                                                s
                                                 <div class="dropDownSelect2"></div>
                                             </div>
                                         </form>
@@ -194,59 +292,39 @@ if(!isset($_SESSION['username'])){
                                                 <th>NO</th>
                                                 <th>Periode</th>
                                                 <th>Item</th>
-                                                <th>Value</th>
-                                                <th>MA-1</th>
-                                                <th>MA-2</th>
-                                                <th>a</th>
-                                                <th>b</th>
-                                                <th>Prediksi</th>
-                                                <th>Error</th>
-                                                <th>ABS(error/qty)</th>
+                                                <th>Penjualan</th>
+                                                <th>MA-3 bulan</th>
+                                                <th>DMA 3 bulan</th>
+                                                <th>at</th>
+                                                <th>bt</th>
+                                                <th>ft</th>
+                                                <th>MAPE</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php
-                                            $no = 1;
-                                            $konstanta = $_GET['konstanta']??1-1;
-                                            $tampil = mysqli_query($koneksi,"SELECT 
-                                            a.periode, 
-                                            a.item, 
-                                            a.value, 
-                                            Round( ( SELECT SUM(b.value) / COUNT(b.value) FROM tbl_penjualan AS b 
-                                            WHERE DATEDIFF(a.periode, b.periode) BETWEEN 0 AND $konstanta), 2) AS 'M1',
-                                            Round( ( SELECT SUM(b.M1) / COUNT(b.M1) FROM
-                                                (SELECT 
-                                                a.periode, 
-                                                a.value, 
-                                                Round( ( SELECT SUM(b.value) / COUNT(b.value) FROM tbl_penjualan AS b WHERE DATEDIFF(a.periode, b.periode) 
-                                                BETWEEN 0 AND $konstanta), 2) AS 'M1' FROM tbl_penjualan AS a ORDER BY a.periode)
-                                            AS b WHERE DATEDIFF(a.periode, b.periode) BETWEEN 0 AND $konstanta), 2) AS 'M2'
-                                            FROM tbl_penjualan AS a ORDER BY a.periode");
-                                            $total = mysqli_num_rows($tampil); 
-                                            while($data=mysqli_fetch_array($tampil)){
+                                            $i=0;
+                                            $n=0;
+                                            foreach($hasil['data'] as $row){
                                             ?>
                                             <tr>
-                                                <td><?php echo $n=$no++;?></td>
-                                                <td><?php echo $tanggal=$data ['periode'];
-                                                    $tanggal_ar[] = $tanggal;?></td>
-                                                <td><?=$data ['item']?></td>
-                                                <td><?=$data ['value']?></td>
-                                                <td><?php echo number_format($harga=$data['value'],2,",",".");
-                                                    $harga_ar[] = $harga;?></td>
-                                                <td><?php echo number_format($data['M1'],2,",",".");?></td>
-                                                <td><?php echo number_format($data['M2'],2,",",".");?></td>
-                                                <td><?php echo number_format($a=(2*$data['M1'])-$data['M2'],2,",",".");?></td>
-                                                <td><?php echo number_format($b=2/(5-1)*($data['M1']-$data['M2']),2,",",".");?></td>
-                                                <td><?php echo number_format($prediksi=$a+$b,2,",",".");
-                                                     $prediksi_ar[] = $prediksi;?></td>
-                                                <td><?php echo number_format($error=$data['value']-$prediksi,2,",",".");?></td>
-                                                <td style="display:none;"><?php echo number_format($abs=abs($error/$data['value']),2,",",".");?></td>
-                                                <td style="display:none;"><?php 
-                                                $jumlah_ar[] = $abs;
-                                                $sum=array_sum($jumlah_ar);
-                                                echo number_format($sum1=$sum,2,",",".");?></td>
+                                                <td><?=$n=$n+1?></td>
+                                                <td><?=$row[0]?></td>
+                                                <td><?=$row[1]?></td>
+                                                <td><?=$row[2]?></td>
+                                                <td><?=number_format($hasil['MA'][$i],2)!='0.0'?number_format($hasil['MA'][$i],2):''?></td>
+                                                <td><?=number_format($hasil['DMA'][$i],2)!='0.0'?number_format($hasil['DMA'][$i],2):''?></td>
+                                                <td><?=number_format($hasil['AT'][$i],2)!='0.0'?number_format($hasil['AT'][$i],2):''?></td>
+                                                <td><?=number_format($hasil['BT'][$i],2)!='0.0'?number_format($hasil['BT'][$i],2):''?></td>
+                                                <td><?=number_format($hasil['FT'][$i],2)!='0.0'?number_format($hasil['FT'][$i],2):''?></td>
+                                                <td><?=number_format($hasil['MAPE'][$i],2)!='inf'&&number_format($hasil['MAPE'][$i],2)!='0.0'?number_format($hasil['MAPE'][$i],2):''?></td>
+                                                <?php 
+                                                $i++;
+                                                //echo number_format($sum1=$sum,2,",",".");?>
                                             </tr>
-                                            <?php } ?>
+                                            <?php
+                                            }
+                                            ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -304,34 +382,7 @@ if(!isset($_SESSION['username'])){
                                             });
                                     </script>
                                 <br/>
-                                <h4>Nilai MAPE (Mean Absolute Percentage Error)= <?php echo number_format(100/$n*$sum1,2,",",".")?>%</h4>
-                                <h2>Prediksi <?php echo $prediksi = $_GET['prediksi']??1 ?> periode kedepan</h2>
-                                <br/>
-                                <div class="table-responsive table-data">
-                                    <table class="table table-borderless table-striped table-earning">
-                                        <thead>
-                                            <tr>
-                                                <th>NO</th>
-                                                <th>Periode</th>
-                                                <th>Prediksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                            $no=1;
-                                            $m=1;
-                                            $date1 = $tanggal;// pendefinisian tanggal awal //operasi penjumlahan tanggal sebanyak 6 hari
-                                            while($no<=$prediksi){
-                                            ?>
-                                            <tr>
-                                                <td><?php echo $no++;?></td>
-                                                <td><?php echo $date1 = date('Y-m-d', strtotime('+1 days', strtotime($date1)));?></td>
-                                                <td><?php echo number_format($a+$b*$m++,2,",",".");?></td>
-                                            </tr>
-                                            <?php } ?>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
